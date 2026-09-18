@@ -26,6 +26,9 @@ function App() {
         return res.json();
       })
       .then((data) => {
+        // some APIs return the array directly ([...]), others wrap it
+        // in an object like { notes: [...] } or { data: [...] } —
+        // this handles either shape without crashing
         const notes = Array.isArray(data) ? data : data.notes ?? data.data ?? [];
         setNotesList(notes);
         setIsLoading(false);
@@ -35,8 +38,6 @@ function App() {
         setIsLoading(false);
       });
   }, []);
-
-  
   const [showAddFolder, setShowAddFolder] = useState(false);
   // this holds whatever's currently typed in the new-folder input —
   // "controlled input" means React state is the source of truth for
@@ -72,7 +73,10 @@ function App() {
     try {
       const res = await fetch(`${API_BASE_URL}/notes/${note.id}`);
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const fullNote = await res.json();
+      const responseData = await res.json();
+      // to tackel the note api response structure
+      
+      const fullNote = responseData.note ?? responseData;
 
       // cache it into notesList too, so clicking this same note again
       // later won't need another network request
@@ -233,7 +237,7 @@ function App() {
         <section className="last">
           {!selectedNote ? (
             <div id="select-note">
-              <img id="note-image" src="" alt="note" />
+              <img id="note-image" alt="note" />
               <h2 id="heading_last">Select a note to view</h2>
               <h5 id="para">
                 Choose a note form the list on the left to view its contents,or
@@ -242,7 +246,7 @@ function App() {
             </div>
           ) : showRestore ? (
             <div id="restore">
-              <img id="restore-icon" src="" alt="restore-image" />
+              <img id="restore-icon" alt="restore-image" />
               <h2 id="heading_last">Restore "{selectedNote.title}"</h2>
               <h5>
                 Don't want to lose this note? it's not too late! Just click the
@@ -258,7 +262,7 @@ function App() {
               <span id="heading-dots">
                 <h1 id="heading_last">{selectedNote.title}</h1>
                 <button id="dots_btn" onClick={() => setShowMenu(!showMenu)}>
-                  <img id="dots" src="" alt="dots" />
+                  <img id="dots" alt="dots" />
                 </button>
               </span>
               {showMenu && (
@@ -289,9 +293,11 @@ function App() {
                 <span className="row">{selectedNote.folder?.name}</span>
               </section>
               <div id="para">
-                {selectedNote.content.split("\n\n").map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+                {(selectedNote.content ?? selectedNote.preview ?? "")
+                  .split("\n\n")
+                  .map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
               </div>
             </div>
           )}
