@@ -7,18 +7,25 @@ const API_BASE_URL = "https://nowted-server.remotestate.com";
 
 function App() {
   const [showSearch, setShowSearch] = useState(false);
-  // null = nothing selected yet, so the "select a note" empty state shows
-
-  const [selectedNote, setSelectedNote] = useState(null);
-  // starts empty — real data arrives from the API once the fetch below completes
+  // storing only the id — the full note is always looked up fresh
+  // from notesList below, so there's exactly one copy of its data
+  // anywhere, and editing it can never go out of sync
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [notesList, setNotesList] = useState([]);
   const [folders, setFolders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [notesLoading, setNotesLoading] = useState(true);
+  const [foldersLoading, setFoldersLoading] = useState(true);
+  const isLoading = notesLoading || foldersLoading;
   const [loadError, setLoadError] = useState(null);
+  const [showAddFolder, setShowAddFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [showRestore, setShowRestore] = useState(false);
 
-  // runs once when App first mounts (the [] at the end is the
-  // dependency list — empty means "only run on the very first render,
-  // never again"). This is the standard shape for "fetch data on load."
+  // derived, not stored — recalculated every render from whatever
+  // notesList currently contains
+  const selectedNote = notesList.find((n) => n.id === selectedNoteId);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/notes`)
       .then((res) => {
@@ -26,33 +33,37 @@ function App() {
         return res.json();
       })
       .then((data) => {
-        // some APIs return the array directly ([...]), others wrap it
-        // in an object like { notes: [...] } or { data: [...] } —
-        // this handles either shape without crashing
         const notes = Array.isArray(data) ? data : data.notes ?? data.data ?? [];
         setNotesList(notes);
-        setIsLoading(false);
+        setNotesLoading(false);
       })
       .catch((err) => {
         setLoadError(err.message);
-        setIsLoading(false);
+        setNotesLoading(false);
       });
   }, []);
-  const [showAddFolder, setShowAddFolder] = useState(false);
-  // this holds whatever's currently typed in the new-folder input —
-  // "controlled input" means React state is the source of truth for
-  // the input's value, not the DOM itself
-  const [newFolderName, setNewFolderName] = useState("");
-  const [showMenu, setShowMenu] = useState(false);
-  const [showRestore, setShowRestore] = useState(false);
 
-  // switching notes should always reset menu/restore back to closed,
-  // otherwise clicking a new note while the restore panel is open
-  // would show the wrong note's restore message
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/folders`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const foldersList = Array.isArray(data) ? data : data.folders ?? data.data ?? [];
+        setFolders(foldersList);
+        setFoldersLoading(false);
+      })
+      .catch((err) => {
+        setLoadError(err.message);
+        setFoldersLoading(false);
+      });
+  }, []);
+
   const handleSelectNote = async (note) => {
     // same note clicked again → close it (toggle)
-    if (selectedNote?.id === note.id) {
-      setSelectedNote(null);
+    if (selectedNoteId === note.id) {
+      setSelectedNoteId(null);
       setShowMenu(false);
       setShowRestore(false);
       return;
@@ -61,29 +72,23 @@ function App() {
     setShowMenu(false);
     setShowRestore(false);
 
-    // if we've already fetched this note's full content before, no
-    // need to hit the network again — just show what we have
+    // already have full content cached from a previous open? just select it
     if (note.content !== undefined) {
-      setSelectedNote(note);
+      setSelectedNoteId(note.id);
       return;
     }
 
-    // the list endpoint only gave us a preview, not the full body —
-    // fetch the real thing before showing the detail pane
+    // list endpoint only gave a preview — fetch the real content
     try {
       const res = await fetch(`${API_BASE_URL}/notes/${note.id}`);
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const responseData = await res.json();
-      // to tackel the note api response structure
-      
       const fullNote = responseData.note ?? responseData;
 
-      // cache it into notesList too, so clicking this same note again
-      // later won't need another network request
       setNotesList((prev) =>
         prev.map((n) => (n.id === note.id ? { ...n, ...fullNote } : n))
       );
-      setSelectedNote(fullNote);
+      setSelectedNoteId(note.id);
     } catch (err) {
       console.error("Failed to load note detail:", err);
     }
@@ -91,26 +96,71 @@ function App() {
 
   const handleAddFolder = () => {
     const trimmed = newFolderName.trim();
-    if (trimmed === "") return; // ignore empty/blank submissions
-    setFolders([...folders, trimmed]);
-    setNewFolderName(""); // clear the input for next time
-    setShowAddFolder(false); // close the input box after adding
+    if (trimmed === "") return;
+    // TODO: this only updates local state — becomes a real POST /folders next
+    setFolders([...folders, { id: Date.now(), name: trimmed }]);
+    setNewFolderName("");
+    setShowAddFolder(false);
   };
 
-  const handleNewNote = () => {
-    const newNote = {
-      id: Date.now(), // simple way to get a unique id without a backend
-      title: "Untitled Note",
-      date: new Date().toLocaleDateString("en-GB"), // e.g. 17/09/2026
-      folder: "Personal",
-      description: "New note...",
-      body: "Start writing here...",
-    };
-    // spread the old list into a new array with newNote first —
-    // never mutate state directly (no notesList.push), always create
-    // a new array/object so React knows something changed
-    setNotesList([newNote, ...notesList]);
-    handleSelectNote(newNote);
+  const handleNewNote = async () => {
+    // notes need a real folderId — use the first folder as a default
+    // for now; a folder picker would be the natural next feature
+    const defaultFolderId = folders[0]?.id;
+    if (!defaultFolderId) {
+      alert("Create a folder first — notes need to belong to one.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          folderId: defaultFolderId,
+          title: "Untitled Note",
+          content: "Start writing here...",
+        }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const responseData = await res.json();
+      const createdNote = responseData.note ?? responseData;
+
+      setNotesList([createdNote, ...notesList]);
+      setSelectedNoteId(createdNote.id);
+    } catch (err) {
+      console.error("Failed to create note:", err);
+      alert("Couldn't create the note — check the console for details.");
+    }
+  };
+
+  // updates the field locally right away (so typing feels instant),
+  // the actual save to the server happens separately, on blur
+  const handleFieldChange = (field, value) => {
+    setNotesList((prev) =>
+      prev.map((n) => (n.id === selectedNoteId ? { ...n, [field]: value } : n))
+    );
+  };
+
+  // fires when you click/tab away from the title or content box —
+  // this is when the edit actually gets sent to the server. Saving on
+  // every keystroke would fire a network request per character, and
+  // requests can arrive out of order and overwrite a later edit
+  const handleSaveNote = async () => {
+    if (!selectedNote) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes/${selectedNote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: selectedNote.title,
+          content: selectedNote.content,
+        }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    } catch (err) {
+      console.error("Failed to save note:", err);
+    }
   };
 
   if (isLoading) {
@@ -154,11 +204,11 @@ function App() {
             <h2 id="h1">Recents</h2>
             {notesList.slice(0, 3).map((note) => (
               <a
-                className={`nav_content${selectedNote?.id === note.id ? ' selected' : ''}`}
+                className={`nav_content${selectedNoteId === note.id ? " selected" : ""}`}
                 href="#"
                 key={note.id}
                 onClick={(e) => {
-                  e.preventDefault(); // stop the # link from jumping the page
+                  e.preventDefault();
                   handleSelectNote(note);
                 }}
               >
@@ -168,7 +218,7 @@ function App() {
             ))}
           </section>
 
-          <section className="nav_div">
+          <section className="nav_div" id="folderList">
             <span id="folder-addfile">
               <h2 id="h1">Folders</h2>
               <button
@@ -193,15 +243,17 @@ function App() {
               />
             )}
 
-            {folders.map((folder) => (
-              <a className="nav_content" href="#" key={folder}>
-                <img src="/assets/document.svg" alt="" />
-                {folder}
-              </a>
-            ))}
+            <div className="folder-items">
+              {folders.map((folder) => (
+                <a className="nav_content" href="#" key={folder.id}>
+                  <img src="/assets/document.svg" alt="" />
+                  {folder.name}
+                </a>
+              ))}
+            </div>
           </section>
 
-          <section className="nav_div">
+          <section className="nav_div" id="more-info">
             <h2 id="h1">More</h2>
             <a className="nav_content" href="#">
               <img src="assets/document.svg" alt="" />
@@ -217,21 +269,24 @@ function App() {
             </a>
           </section>
         </section>
+
         <section className="mid">
           <h1 id="personal">Personal</h1>
-          {notesList.map((note) => (
-            <div
-              className={`mid_div${selectedNote?.id === note.id ? " selected" : ""}`}
-              key={note.id}
-              onClick={() => handleSelectNote(note)}
-            >
-              <h3>{note.title}</h3>
-              <span className="date">
-                {new Date(note.createdAt).toLocaleDateString("en-GB")}
-              </span>
-              <span className="description">{note.preview}</span>
-            </div>
-          ))}
+          <div id="docList">
+            {notesList.map((note) => (
+              <div
+                className={`mid_div${selectedNoteId === note.id ? " selected" : ""}`}
+                key={note.id}
+                onClick={() => handleSelectNote(note)}
+              >
+                <h3>{note.title}</h3>
+                <span className="date">
+                  {new Date(note.createdAt).toLocaleDateString("en-GB")}
+                </span>
+                <span className="description">{note.preview}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="last">
@@ -260,7 +315,12 @@ function App() {
           ) : (
             <div>
               <span id="heading-dots">
-                <h1 id="heading_last">{selectedNote.title}</h1>
+                <input
+                  id="heading_last"
+                  value={selectedNote.title}
+                  onChange={(e) => handleFieldChange("title", e.target.value)}
+                  onBlur={handleSaveNote}
+                />
                 <button id="dots_btn" onClick={() => setShowMenu(!showMenu)}>
                   <img id="dots" alt="dots" />
                 </button>
@@ -292,13 +352,12 @@ function App() {
                 <span className="col">Folder</span>
                 <span className="row">{selectedNote.folder?.name}</span>
               </section>
-              <div id="para">
-                {(selectedNote.content ?? selectedNote.preview ?? "")
-                  .split("\n\n")
-                  .map((paragraph, i) => (
-                    <p key={i}>{paragraph}</p>
-                  ))}
-              </div>
+              <textarea
+                id="para"
+                value={selectedNote.content ?? ""}
+                onChange={(e) => handleFieldChange("content", e.target.value)}
+                onBlur={handleSaveNote}
+              />
             </div>
           )}
         </section>
