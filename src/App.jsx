@@ -26,6 +26,13 @@ function App() {
   // notesList currently contains
   const selectedNote = notesList.find((n) => n.id === selectedNoteId);
 
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
+  // null = no folder picked, show everything
+  const visibleNotes = selectedFolderId
+    ? notesList.filter((n) => n.folderId === selectedFolderId)
+    : notesList;
+  const selectedFolder = folders.find((f) => f.id === selectedFolderId);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/notes`)
       .then((res) => {
@@ -245,7 +252,18 @@ function App() {
 
             <div className="folder-items">
               {folders.map((folder) => (
-                <a className="nav_content" href="#" key={folder.id}>
+                <a
+                  className={`nav_content${selectedFolderId === folder.id ? " selected" : ""}`}
+                  href="#"
+                  key={folder.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // clicking the already-selected folder again clears the filter
+                    setSelectedFolderId(
+                      selectedFolderId === folder.id ? null : folder.id
+                    );
+                  }}
+                >
                   <img src="/assets/document.svg" alt="" />
                   {folder.name}
                 </a>
@@ -271,9 +289,10 @@ function App() {
         </section>
 
         <section className="mid">
-          <h1 id="personal">Personal</h1>
+          <h1 id="personal">{selectedFolder ? selectedFolder.name : "Select a directory"}</h1>
           <div id="docList">
-            {notesList.map((note) => (
+            {visibleNotes.map((note) => (
+              
               <div
                 className={`mid_div${selectedNoteId === note.id ? " selected" : ""}`}
                 key={note.id}
