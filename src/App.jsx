@@ -26,8 +26,8 @@ function App() {
   // derived, not stored — recalculated every render from whatever
   // notesList currently contains
   const selectedNote =
-  notesList.find((n) => n.id === selectedNoteId) ??
-  trashNotes.find((n) => n.id === selectedNoteId);
+    notesList.find((n) => n.id === selectedNoteId) ??
+    trashNotes.find((n) => n.id === selectedNoteId);
 
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [specialView, setSpecialView] = useState(null);
@@ -60,7 +60,7 @@ function App() {
     const matchesSpecialView =
       specialView === null ||
       (specialView === "favorites" && n.isFavorite === true) ||
-      (specialView === "trash")||
+      specialView === "trash" ||
       (specialView === "archived" && n.isArchived === true);
 
     const matchesSearch =
@@ -120,10 +120,10 @@ function App() {
 
     setShowMenu(false);
     if (specialView === "trash") {
-    setSelectedNoteId(note.id);
-    setShowRestore(true);
-    return;
-  }
+      setSelectedNoteId(note.id);
+      setShowRestore(true);
+      return;
+    }
     setShowRestore(false);
 
     // already have full content cached from a previous open? just select it
@@ -189,25 +189,25 @@ function App() {
   };
 
   const handleOpenTrash = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await fetch(`${API_BASE_URL}/notes?deleted=true`);
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes?deleted=true`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch trash");
+      if (!res.ok) {
+        throw new Error("Failed to fetch trash");
+      }
+
+      const responseData = await res.json();
+
+      setTrashNotes(responseData.notes ?? []);
+      setSelectedFolderId(null);
+      setSpecialView("trash");
+      setSelectedNoteId(null);
+    } catch (error) {
+      console.error("Trash error:", error);
     }
-
-    const responseData = await res.json();
-
-    setTrashNotes(responseData.notes ?? []);
-    setSelectedFolderId(null);
-    setSpecialView("trash");
-    setSelectedNoteId(null);
-  } catch (error) {
-    console.error("Trash error:", error);
-  }
-};
+  };
 
   // updates the field locally right away (so typing feels instant),
   // the actual save to the server happens separately, on blur
@@ -284,8 +284,7 @@ function App() {
       // Optional: reload active notes
       // so the restored note appears in Personal
       setSelectedNoteId(null);
-    setShowRestore(false);
-
+      setShowRestore(false);
     } catch (error) {
       console.error("Restore error:", error);
     }
@@ -343,7 +342,7 @@ function App() {
             >
               <img
                 id="search_icon"
-                src="/assets/search-icon.png"
+                src="assets/unhighlighted_search.svg"
                 alt="Search"
               />
             </button>
@@ -375,7 +374,7 @@ function App() {
                   handleSelectNote(note);
                 }}
               >
-                <img src="/assets/document.svg" alt="" />
+                <img src="/assets/file_icon.svg" alt="" />
                 {note.title}
               </a>
             ))}
@@ -385,10 +384,11 @@ function App() {
             <span id="folder-addfile">
               <h2 id="h1">Folders</h2>
               <button
-                id="add-files"
+                // id="add-files"
+                
                 onClick={() => setShowAddFolder(!showAddFolder)}
               >
-                +
+              <img src="/assets/add_folder_icon.svg" alt="Add folder" />
               </button>
             </span>
 
@@ -422,7 +422,7 @@ function App() {
                     );
                   }}
                 >
-                  <img src="/assets/document.svg" alt="" />
+                  <img src="assets/folder_icon.svg" alt="" />
                   {folder.name}
                 </a>
               ))}
@@ -443,7 +443,7 @@ function App() {
                 setSpecialView("favorites");
               }}
             >
-              <img src="assets/document.svg" alt="" />
+              <img src="assets/star.svg" alt="" />
               Favorites
             </a>
             <a
@@ -453,7 +453,7 @@ function App() {
               href="#"
               onClick={handleOpenTrash}
             >
-              <img src="/assets/document.svg" alt="" />
+              <img src="/assets/trash.svg" alt="" />
               Trash
             </a>
             <a
@@ -468,7 +468,7 @@ function App() {
                 setSpecialView("archived");
               }}
             >
-              <img src="/assets/document.svg" alt="" />
+              <img src="/assets/archived.svg" alt="" />
               Archived Notes
             </a>
           </section>
@@ -514,7 +514,10 @@ function App() {
                 'Restore' button and it will be added back to your list. It's
                 that simple.
               </h5>
-              <button id="restore-btn" onClick={() => handleRestoreNote(selectedNote.id)}>
+              <button
+                id="restore-btn"
+                onClick={() => handleRestoreNote(selectedNote.id)}
+              >
                 Restore
               </button>
             </div>
@@ -528,7 +531,7 @@ function App() {
                   onBlur={handleSaveNote}
                 />
                 <button id="dots_btn" onClick={() => setShowMenu(!showMenu)}>
-                  <img id="dots" alt="dots" />
+                  <img id="dots" src="assets/dots.svg" alt="dots" />
                 </button>
               </span>
               {showMenu && (
