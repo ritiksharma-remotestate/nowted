@@ -148,13 +148,34 @@ function App() {
     }
   };
 
-  const handleAddFolder = () => {
+  const handleAddFolder = async () => {
     const trimmed = newFolderName.trim();
     if (trimmed === "") return;
-    // TODO: this only updates local state — becomes a real POST /folders next
-    setFolders([...folders, { id: Date.now(), name: trimmed }]);
-    setNewFolderName("");
-    setShowAddFolder(false);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/folders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+      // unlike /notes, this endpoint only returns plain text
+      // ("Folder created successfully") — no folder object, no id.
+      // Re-fetching is how we get the new folder's real id back.
+      const refreshed = await fetch(`${API_BASE_URL}/folders`);
+      const refreshedData = await refreshed.json();
+      const foldersList = Array.isArray(refreshedData)
+        ? refreshedData
+        : (refreshedData.folders ?? refreshedData.data ?? []);
+      setFolders(foldersList);
+
+      setNewFolderName("");
+      setShowAddFolder(false);
+    } catch (err) {
+      console.error("Failed to create folder:", err);
+      alert("Couldn't create the folder — check the console for details.");
+    }
   };
 
   const handleNewNote = async () => {
@@ -315,6 +336,31 @@ function App() {
 
     setShowMenu(false);
   };
+  // changes which folder a note belongs to — updates the UI right
+  // away, then persists it with the same PATCH pattern as title/content
+  const handleChangeFolder = async (newFolderId) => {
+    if (!selectedNote) return;
+    const newFolder = folders.find((f) => f.id === newFolderId);
+
+    setNotesList((prev) =>
+      prev.map((n) =>
+        n.id === selectedNote.id
+          ? { ...n, folderId: newFolderId, folder: newFolder }
+          : n,
+      ),
+    );
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes/${selectedNote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId: newFolderId }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    } catch (err) {
+      console.error("Failed to change folder:", err);
+    }
+  };
 
   const handleToggleArchive = async () => {
     if (!selectedNote) return;
@@ -385,10 +431,10 @@ function App() {
               <h2 id="h1">Folders</h2>
               <button
                 // id="add-files"
-                
+
                 onClick={() => setShowAddFolder(!showAddFolder)}
               >
-              <img src="/assets/add_folder_icon.svg" alt="Add folder" />
+                <img src="/assets/add_folder_icon.svg" alt="Add folder" />
               </button>
             </span>
 
@@ -534,35 +580,62 @@ function App() {
                   <img id="dots" src="assets/dots.svg" alt="dots" />
                 </button>
               </span>
-              {showMenu && (
-                <div className="menu">
-                  <button onClick={handleToggleArchive}>
-                    {selectedNote.isArchived
-                      ? "Remove from archive "
-                      : "Add to archive"}
-                  </button>
-                  <button onClick={handleDeleteNote}>Delete</button>
-                  <button onClick={handleToggleFavorite}>
-                    {selectedNote.isFavorite
-                      ? "Remove from favourites"
-                      : "Add to favourites"}
-                  </button>
-                </div>
-              )}
+              <section id="dots-menu">
+                {showMenu && (
+                  <div className="menu">
+                    <button onClick={handleToggleFavorite}>
+                      <img src="assets/star.svg" alt="fvt logo"/>
+                      {selectedNote.isFavorite
+                        ? "Remove from favourites"
+                        : "Add to favourites"}
+                    </button>
+                    <button onClick={handleToggleArchive}>
+                                            <img src="assets/archived.svg" alt="archived logo"/>
+
+                      {selectedNote.isArchived
+                        ? "Remove from archive "
+                        : "Add to archive"}
+                    </button>
+                    <hr id="id2"/>
+
+                    <button onClick={handleDeleteNote}>
+                                            <img src="assets/trash.svg" alt="fvt logo"/>
+Delete</button>
+                  </div>
+                )}
+              </section>
               <section className="table">
-                <span className="col">Date</span>
-                <span className="row">
-                  {selectedNote.createdAt
-                    ? new Date(selectedNote.createdAt).toLocaleDateString(
-                        "en-GB",
-                      )
-                    : ""}
-                </span>
+                <div className="table-row">
+                  <span className="col">Date</span>
+                  <span className="row">
+                    {selectedNote.createdAt
+                      ? new Date(selectedNote.createdAt).toLocaleDateString(
+                          "en-GB",
+                        )
+                      : ""}
+                  </span>
+                </div>
 
                 <hr id="id" />
+                <div className="table-row">
+                  <span className="col">Folder</span>
 
-                <span className="col">Folder</span>
-                <span className="row">{selectedNote.folder?.name}</span>
+                  <select
+                    className="row folder-list"
+                    value={selectedNote.folderId ?? ""}
+                    onChange={(e) => handleChangeFolder(e.target.value)}
+                  >
+                    {folders.map((folder) => (
+                      <option
+                        className="options"
+                        key={folder.id}
+                        value={folder.id}
+                      >
+                        {folder.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </section>
               <textarea
                 id="para"
