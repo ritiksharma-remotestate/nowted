@@ -19,17 +19,15 @@ function NotesList({
   return (
     <section className="mid">
       <h1 id="personal">
-        <h1 id="personal">
-          {specialView === "favorites"
-            ? "Favorites"
-            : specialView === "trash"
-              ? "Trash"
-              : specialView === "archived"
-                ? "Archived Notes"
-                : selectedFolder
-                  ? selectedFolder.name
-                  : "All notes"}
-        </h1>{" "}
+        {specialView === "favorites"
+          ? "Favorites"
+          : specialView === "trash"
+            ? "Trash"
+            : specialView === "archived"
+              ? "Archived Notes"
+              : selectedFolder
+                ? selectedFolder.name
+                : "All notes"}
       </h1>
 
       <div id="docList">
