@@ -5,15 +5,10 @@ import NotesList from "./components/NotesList/NotesList";
 import NoteEditor from "./components/NoteEditor/NoteEditor";
 import RestoreNote from "./components/RestoreNote/RestoreNote";
 import EmptyState from "./components/EmptyState/EmptyState";
-import type {
-  Folder,
-  Note,
-  SpecialView,
-} from "./types";
-const API_BASE_URL = "https://nowted-server.remotestate.com";
+import type { Folder, Note, SpecialView } from "./types";
 
-
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+console.log("API URL:", API_BASE_URL);
 type NotesResponse = {
   notes?: Note[];
   data?: Note[];
@@ -574,6 +569,7 @@ function App() {
           visibleNotes={visibleNotes}
           selectedNoteId={selectedNoteId}
           handleSelectNote={handleSelectNote}
+          specialView={specialView}
         />
 
         <section className="last">

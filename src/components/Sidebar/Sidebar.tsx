@@ -92,7 +92,17 @@ function Sidebar({
               handleSelectNote(note);
             }}
           >
-            <img src="/assets/file_icon.svg" alt="" />
+            {
+              <img
+                src={
+                  (selectedNoteId === note.id
+                    ? "/assets/highlighted_file.svg"
+                    : "/assets/file_icon.svg")
+                }
+                alt=""
+              />
+            }
+           
             {note.title}
           </a>
         ))}
@@ -144,8 +154,8 @@ function Sidebar({
               <img
                 src={
                   selectedFolderId === folder.id
-                  ? "/assets/opened_folder.svg"
-                    :"/assets/folder_icon.svg"
+                    ? "/assets/opened_folder.svg"
+                    : "/assets/folder_icon.svg"
                 }
                 alt=""
               />
@@ -167,18 +177,37 @@ function Sidebar({
             e.preventDefault();
 
             setSelectedFolderId(null);
-            setSpecialView("favorites");
+            setSpecialView(specialView === "favorites" ? null : "favorites");
           }}
         >
-          <img src="/assets/star.svg" alt="" />
+          <img
+            src={
+              specialView === "favorites"
+                ? "/assets/highlighted_star.svg"
+                : "/assets/star.svg"
+            }
+            alt=""
+          />
           Favorites
         </a>
         <a
           className={`nav_content${specialView === "trash" ? " selected" : ""}`}
           href="#"
-          onClick={handleOpenTrash}
+          onClick={(e) => {
+            e.preventDefault();
+
+            setSelectedFolderId(null);
+            setSpecialView(specialView === "trash" ? null : "trash");
+          }}
         >
-          <img src="/assets/trash.svg" alt="" />
+          <img
+            src={
+              specialView === "trash"
+                ? "/assets/highlighted_trash.svg"
+                : "/assets/trash.svg"
+            }
+            alt=""
+          />
           Trash
         </a>
         <a
@@ -190,11 +219,18 @@ function Sidebar({
             e.preventDefault();
 
             setSelectedFolderId(null);
-            setSpecialView("archived");
+            setSpecialView(specialView === "archived" ? null : "archived");
           }}
         >
-          <img src="/assets/archived.svg" alt="" />
-          Archived Notes
+          <img
+            src={
+              specialView === "archived"
+                ? "/assets/highlighted_archive.svg"
+                : "/assets/archived.svg"
+            }
+            alt=""
+          />
+          Archived
         </a>
       </section>
     </section>

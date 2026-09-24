@@ -3,11 +3,11 @@ import type { Note } from "../../types";
 
 type NoteMenuProps = {
   showMenu: boolean;
-  selectedNote:Note;
+  selectedNote: Note;
   handleToggleFavorite: () => Promise<void>;
   handleDeleteNote: () => Promise<void>;
   handleToggleArchive: () => Promise<void>;
-}
+};
 
 function NoteMenu({
   showMenu,
@@ -15,7 +15,7 @@ function NoteMenu({
   handleToggleFavorite,
   handleToggleArchive,
   handleDeleteNote,
-}:NoteMenuProps) {
+}: NoteMenuProps) {
   if (!showMenu) {
     return null;
   }
@@ -24,10 +24,7 @@ function NoteMenu({
     <section id="dots-menu">
       <div className="menu">
         <button onClick={handleToggleFavorite}>
-          <img
-            src="/assets/star.svg"
-            alt="fvt logo"
-          />
+          <img src="/assets/star.svg" alt="fvt logo" />
 
           {selectedNote.isFavorite
             ? "Remove from favourites"
@@ -35,24 +32,15 @@ function NoteMenu({
         </button>
 
         <button onClick={handleToggleArchive}>
-          <img
-            src="/assets/archived.svg"
-            alt="archived logo"
-          />
+          <img src="/assets/archived.svg" alt="archived logo" />
 
-          {selectedNote.isArchived
-            ? "Remove from archive"
-            : "Add to archive"}
+          {selectedNote.isArchived ? "Remove from archive" : "Add to archive"}
         </button>
 
         <hr id="id2" />
 
         <button onClick={handleDeleteNote}>
-          <img
-            src="/assets/trash.svg"
-            alt="trash logo"
-          />
-
+          <img src="/assets/trash.svg" alt="trash logo" />
           Delete
         </button>
       </div>

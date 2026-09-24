@@ -1,14 +1,16 @@
 .mid {
   height: 100vh;
-  background-color: #181818;
+  background-color: rgba(28, 28, 28, 1);
 }
 
 #personal {
   font-size: 22px;
   color: white;
-  margin-left: 10px;
-}
+  padding: 5% 5%  5% 3% ;
+  margin: 0;
+    text-align: left;
 
+}
 h3 {
   font-size: 18px;
 }
@@ -52,7 +54,7 @@ h3 {
 
 .mid_div.selected {
   background-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 3px 0 0 #312eb5;
+  
 }
 
 #docList {

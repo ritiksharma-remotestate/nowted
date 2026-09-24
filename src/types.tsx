@@ -20,8 +20,4 @@ export type Note = {
   folder?: Folder;
 };
 
-export type SpecialView =
-  | "favorites"
-  | "trash"
-  | "archived"
-  | null;
+export type SpecialView = "favorites" | "trash" | "archived" | null;

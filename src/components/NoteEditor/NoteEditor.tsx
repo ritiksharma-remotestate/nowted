@@ -58,7 +58,9 @@ function NoteEditor({
       />
       <section className="table">
         <div className="table-row">
-          <span className="col">Date</span>
+          <span className="col">
+          <img src="/assets/date_icon.svg" alt="date"/>
+          Date</span>
 
           <span className="row">
             {selectedNote.createdAt
@@ -70,7 +72,8 @@ function NoteEditor({
         <hr id="id" />
 
         <div className="table-row">
-          <span className="col">Folder</span>
+          <span className="col">
+            <img src="/assets/folder_icon.svg" alt="folder"/>Folder</span>
 
           <select
             className="row folder-list"

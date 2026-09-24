@@ -17,7 +17,7 @@ body {
   padding: 30px;
   height: 100vh;
   position: relative;
-  background-color: #181818;
+  background-color: rgba(24, 24, 24, 1);
 }
 
 .nav_content.selected {
@@ -44,12 +44,26 @@ body {
   .main {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .first,
   .mid,
   .last {
-    height: auto;
     width: 100%;
+    height: auto;
+  }
+
+  #docList {
+    height: 60vh;
+    overflow-y: auto;
+  }
+
+  .last {
+    padding: 16px;
   }
 }
