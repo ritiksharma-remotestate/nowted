@@ -6,6 +6,8 @@ import NoteEditor from "./components/NoteEditor/NoteEditor";
 import RestoreNote from "./components/RestoreNote/RestoreNote";
 import EmptyState from "./components/EmptyState/EmptyState";
 import type { Folder, Note, SpecialView } from "./types";
+import { useTheme } from "./context/themeContext";
+
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 type NotesResponse = {
@@ -17,7 +19,6 @@ type FoldersResponse = {
   folders?: Folder[];
   data?: Folder[];
 };
-
 function App() {
   const [showSearch, setShowSearch] = useState<boolean>(false);
 
@@ -54,6 +55,8 @@ function App() {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId) ?? null;
+  const {theme,toggleTheme}=useTheme();
+
 
   const selectedNote =
     notesList.find((n) => n.id === selectedNoteId) ??
@@ -61,7 +64,7 @@ function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchInput);
+      setDebouncedSearch(searchInput); 
     }, 400);
 
     return () => clearTimeout(timer);
@@ -540,7 +543,7 @@ function App() {
 
   return (
     <>
-      <main className="main">
+      <main className= "main">
         <Sidebar
           showSearch={showSearch}
           setShowSearch={setShowSearch}
@@ -571,7 +574,7 @@ function App() {
           specialView={specialView}
         />
 
-        <section className="last">
+        <section className= {theme==="light"?"last light":"last dark"}>
           {!selectedNote ? (
             <EmptyState />
           ) : showRestore ? (

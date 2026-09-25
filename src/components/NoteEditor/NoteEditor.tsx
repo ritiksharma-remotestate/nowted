@@ -1,6 +1,5 @@
 import "./NoteEditor.css";
 import type { Dispatch, SetStateAction } from "react";
-
 import NoteMenu from "../NoteMenu/NoteMenu";
 import type { Note, Folder } from "../../types";
 
@@ -90,7 +89,7 @@ function NoteEditor({
       </section>
 
       <textarea
-        id="para"
+        className="para"
         value={selectedNote.content ?? ""}
         onChange={(e) => handleFieldChange("content", e.target.value)}
         onBlur={handleSaveNote}

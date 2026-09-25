@@ -20,7 +20,7 @@
 }
 
 .select-note-heading {
-  color: white;
+  color: inherit;
   font-size: 32px;
   margin: 0 0 15px;
 }
@@ -35,6 +35,10 @@
 
   line-height: 1.5;
 }
+.last.light .select-note-para {
+  color: rgba(0, 0, 0, 0.6);
+}
+
 #search_icon_btn {
   background: none;
   border: none;

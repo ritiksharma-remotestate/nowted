@@ -1,15 +1,20 @@
 .mid {
   height: 100vh;
-  background-color: rgba(28, 28, 28, 1);
+  /* background-color: rgba(28, 28, 28, 1); */
 }
 
+.mid.dark {
+  background-color: rgba(28, 28, 28, 1);
+}
+.mid.light {
+  background-color: whitesmoke;
+}
 #personal {
   font-size: 22px;
-  color: white;
-  padding: 5% 5%  5% 3% ;
+  color: inherit;
+  padding: 5% 5% 5% 3%;
   margin: 0;
-    text-align: left;
-
+  text-align: left;
 }
 h3 {
   font-size: 18px;
@@ -19,17 +24,25 @@ h3 {
   margin: 0 auto 10px;
   padding: 12px 10px;
   background-color: rgba(255, 255, 255, 0.03);
-  color: white;
+  color: inherit;
   width: 90%;
   text-align: left;
   align-items: center;
+}
+.mid.light .mid_div {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.mid.light .mid_div:hover {
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 .date {
   color: rgba(255, 255, 255, 0.4);
   font-size: 16px;
 }
-
+.mid.light .date {
+  color: rgba(0, 0, 0, 0.5);
+}
 .description {
   display: inline-block;
   overflow: hidden;
@@ -40,7 +53,9 @@ h3 {
   font-size: 16px;
   padding-left: 5px;
 }
-
+.mid.light .description {
+  color: rgba(0, 0, 0, 0.6);
+}
 .date,
 .description {
   display: inline-block;
@@ -54,7 +69,6 @@ h3 {
 
 .mid_div.selected {
   background-color: rgba(255, 255, 255, 0.1);
-  
 }
 
 #docList {

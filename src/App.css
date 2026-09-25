@@ -17,8 +17,15 @@ body {
   padding: 30px;
   height: 100vh;
   position: relative;
+}
+.last.dark {
   background-color: rgba(24, 24, 24, 1);
 }
+
+.last.light {
+  background-color: whitesmoke;
+}
+
 
 .nav_content.selected {
   background-color: #312eb5;

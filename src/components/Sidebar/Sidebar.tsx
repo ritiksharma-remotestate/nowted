@@ -1,7 +1,7 @@
 import "./Sidebar.css";
 import type { Note, Folder, SpecialView } from "../../types";
 import type { Dispatch, SetStateAction } from "react";
-
+import { useTheme } from "../../context/themeContext";
 type SidebarProps = {
   showSearch: boolean;
   setShowSearch: Dispatch<SetStateAction<boolean>>;
@@ -45,10 +45,12 @@ function Sidebar({
   handleSelectNote,
   specialView,
 }: SidebarProps) {
+  const { theme, toggleTheme } = useTheme();
   return (
-    <section className="first">
+    <section className={theme==="dark"? "first dark":"first light"}>
       <span id="logo-search">
         <img id="logo" src="/assets/logo.svg" alt="logo" />
+        <button onClick={toggleTheme}>{theme} mode</button>
         <button id="search_icon_btn" onClick={() => setShowSearch(!showSearch)}>
           {showSearch ? (
             <img
@@ -93,16 +95,16 @@ function Sidebar({
             }}
           >
             {
-              <img
+              <img id="file_icon"
                 src={
-                  (selectedNoteId === note.id
+                  selectedNoteId === note.id
                     ? "/assets/highlighted_file.svg"
-                    : "/assets/file_icon.svg")
+                    : "/assets/file_icon.svg"
                 }
                 alt=""
               />
             }
-           
+
             {note.title}
           </a>
         ))}
@@ -115,7 +117,7 @@ function Sidebar({
             id="add-files"
             onClick={() => setShowAddFolder(!showAddFolder)}
           >
-            <img src="/assets/add_folder_icon.svg" alt="Add folder" />
+            <img id="add_folder" src="/assets/add_folder_icon.svg" alt="Add folder" />
           </button>
         </span>
 
@@ -151,7 +153,7 @@ function Sidebar({
                 );
               }}
             >
-              <img
+              <img id="folder_symbol"
                 src={
                   selectedFolderId === folder.id
                     ? "/assets/opened_folder.svg"
@@ -180,7 +182,7 @@ function Sidebar({
             setSpecialView(specialView === "favorites" ? null : "favorites");
           }}
         >
-          <img
+          <img id="fav"
             src={
               specialView === "favorites"
                 ? "/assets/highlighted_star.svg"
@@ -200,7 +202,7 @@ function Sidebar({
             setSpecialView(specialView === "trash" ? null : "trash");
           }}
         >
-          <img
+          <img id="trash"
             src={
               specialView === "trash"
                 ? "/assets/highlighted_trash.svg"
@@ -222,7 +224,7 @@ function Sidebar({
             setSpecialView(specialView === "archived" ? null : "archived");
           }}
         >
-          <img
+          <img id="archived"
             src={
               specialView === "archived"
                 ? "/assets/highlighted_archive.svg"

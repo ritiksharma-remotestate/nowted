@@ -23,10 +23,13 @@
 }
 
 .restore-heading {
-  color: white;
+  color: inherit;
   font-size: 32px;
 
   margin: 0 0 15px;
+}
+.main.light .restore-para {
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .restore-para {

@@ -1,5 +1,6 @@
 import "./NotesList.css";
 import type { Note, Folder } from "../../types";
+import { useTheme } from "../../context/themeContext";
 
 type NotesListProps = {
   selectedFolder: Folder | null;
@@ -16,8 +17,9 @@ function NotesList({
   handleSelectNote,
   specialView,
 }: NotesListProps) {
+  const {theme,toggleTheme}= useTheme()
   return (
-    <section className="mid">
+    <section className={theme==="dark"?"mid dark":"mid light"}>
       <h1 id="personal">
         {specialView === "favorites"
           ? "Favorites"

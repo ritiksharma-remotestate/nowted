@@ -1,9 +1,18 @@
 .first {
   border: none;
   height: 100vh;
-  background-color: rgba(24, 24, 24, 1);
+  /* background-color: rgba(24, 24, 24, 1); */
   display: flex;
   flex-direction: column;
+}
+.first.dark {
+  background-color: rgba(24, 24, 24, 1);
+  color: white;
+}
+
+.first.light {
+  background-color: whitesmoke;
+  color: #181818;
 }
 #add-files {
   background: none;
@@ -17,6 +26,26 @@
 #logo {
   padding-top: 20px;
   padding-left: 10px;
+}
+.first.light #logo{
+  filter: invert(1);
+}
+.first.light #file_icon{
+  filter: invert(1);
+}
+.first.light #add_folder{
+  filter: invert(1);
+}
+.first.light #fav{
+  filter: invert(1);
+}
+.first.light #archived{
+  filter: invert(1);
+}.first.light #trash{
+  filter: invert(1);
+}
+.first.light #folder_symbol{
+  filter: invert(1);
 }
 .new_note {
   width: 90%;
@@ -32,17 +61,24 @@
   justify-content: center;
 
   background-color: rgba(255, 255, 255, 0.05);
-  color: white;
+  color: inherit;
   border: none;
   border-radius: 3px;
 
   margin: 30px auto;
 }
+.first.light .new_note {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .h1 {
   color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
   display: flex;
   padding-left: 10px;
+}
+.first.light .h1 {
+  color: rgba(0, 0, 0, 0.6);
 }
 .nav_content {
   display: flex;
@@ -55,6 +91,9 @@
   line-height: 25px;
   text-decoration: none;
   border-radius: 4px;
+}
+.first.light .nav_content {
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .nav_content:hover {
@@ -69,6 +108,7 @@
   color: white;
   font-weight: 700;
 }
+
 
 #logo-search {
   display: flex;
@@ -131,11 +171,18 @@ button {
   font-size: 15px;
   outline: none;
 }
+.first.light #new_folder_input {
+  background: white;
+  color: #181818;
+  border: 1px solid #d0d0d0;
+}
 
 #new_folder_input::placeholder {
   color: #888;
 }
-
+.first.light #new_folder_input::placeholder {
+  color: #777;
+}
 #new_folder_input:focus {
   border-color: #666;
   background: #292929;

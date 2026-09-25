@@ -1,5 +1,5 @@
 #heading_last {
-  color: white;
+  color: inherit;
   font-size: 32px;
   border: none;
   outline: none;
@@ -8,8 +8,8 @@
   width: 100%;
 }
 
-#para {
-  color: white;
+.para {
+  /* color: white; */
   border: none;
   outline: none;
   background: transparent;
@@ -22,8 +22,10 @@
   overflow-y: auto;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
+
+
 .table {
-  color: white;
+  color: inherit;
   text-align: left;
 }
 .table-row {
@@ -45,6 +47,9 @@
   background-color: rgba(255, 255, 255, 0.1);
   height: 1px;
 }
+.last.light #id {
+  background-color: rgba(0, 0, 0, 0.1);
+}
 .col {
   padding: 10px 0;
 }
@@ -60,17 +65,29 @@
   -webkit-appearance: none;
 }
 
+.last.light .folder-list {
+  background-color: #f5f5f5;
+  color: #181818;
+  color-scheme: light;
+}
 .folder-list option {
   background: #303030;
 
   color: white;
 }
 
+.last.light .folder-list option {
+  background: white;
+  color: #181818;
+}
+
 .folder-list:hover {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
-
+.last.light .folder-list:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
 .folder-list::-webkit-scrollbar {
   width: 5px;
 }
@@ -109,7 +126,9 @@
     color 0.15s ease,
     transform 0.1s ease;
 }
-
+.last.light #dots_btn{
+  filter: invert(1);
+}
 #heading_last,
 #para {
   border: none;
@@ -124,10 +143,3 @@
   resize: vertical;
   min-height: 80vh;
 }
-/* #heading-dots {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  position: relative;
-} */
