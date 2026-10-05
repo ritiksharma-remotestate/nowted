@@ -21,3 +21,9 @@ export type Note = {
 };
 
 export type SpecialView = "favorites" | "trash" | "archived" | null;
+export type NotesResponse = {
+  notes?: Note[];
+  data?: Note[];
+  recentNotes?: Note[];
+  total?: number;
+};

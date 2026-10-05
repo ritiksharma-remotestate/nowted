@@ -5,15 +5,9 @@ import NotesList from "./components/NotesList/NotesList";
 import NoteEditor from "./components/NoteEditor/NoteEditor";
 import RestoreNote from "./components/RestoreNote/RestoreNote";
 import EmptyState from "./components/EmptyState/EmptyState";
-import type { Folder, Note, SpecialView } from "./types";
+import type { Folder, Note, SpecialView, NotesResponse } from "./types";
 import { useTheme } from "./context/themeContext";
-
-
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-type NotesResponse = {
-  notes?: Note[];
-  data?: Note[];
-};
 
 type FoldersResponse = {
   folders?: Folder[];
@@ -55,8 +49,13 @@ function App() {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId) ?? null;
-  const {theme,toggleTheme}=useTheme();
+  const { theme, toggleTheme } = useTheme();
 
+  const PAGE_SIZE = 10;
+
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
   const selectedNote =
     notesList.find((n) => n.id === selectedNoteId) ??
@@ -64,7 +63,7 @@ function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchInput); 
+      setDebouncedSearch(searchInput);
     }, 400);
 
     return () => clearTimeout(timer);
@@ -89,6 +88,31 @@ function App() {
     return matchesFolder && matchesSpecialView && matchesSearch;
   });
 
+  const [recentNotes, setRecentNotes] = useState<Note[]>([]);
+
+  const fetchRecentNotes = async (): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes/recent`);
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const data: Note[] | NotesResponse = await res.json();
+      const notes = Array.isArray(data)
+        ? data
+        : (data.recentNotes ?? data.data ?? []);
+
+      setRecentNotes(notes.slice(0, 3));
+    } catch (err: unknown) {
+      console.error("Failed to load recent notes:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentNotes();
+  }, []);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/notes`)
       .then((res) => {
@@ -104,6 +128,12 @@ function App() {
           : (data.notes ?? data.data ?? []);
 
         setNotesList(notes);
+        const total = Array.isArray(data) ? undefined : data.total;
+        setHasMore(
+          total !== undefined
+            ? notes.length < total
+            : notes.length === PAGE_SIZE,
+        );
         setNotesLoading(false);
       })
       .catch((err: unknown) => {
@@ -116,7 +146,45 @@ function App() {
         setNotesLoading(false);
       });
   }, []);
+  const loadMoreNotes = async (): Promise<void> => {
+    if (loadingMore || !hasMore) return;
 
+    setLoadingMore(true);
+
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(
+        `${API_BASE_URL}/notes?page=${nextPage}&limit=${PAGE_SIZE}`,
+      );
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const data: Note[] | NotesResponse = await res.json();
+      const notes = Array.isArray(data)
+        ? data
+        : (data.notes ?? data.data ?? []);
+      const total = Array.isArray(data) ? undefined : data.total;
+
+      // dedupe: new/archived/restored notes can shift pages and repeat items
+      setNotesList((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        return [...prev, ...notes.filter((n) => !existingIds.has(n.id))];
+      });
+
+      setPage(nextPage);
+      setHasMore(
+        total !== undefined
+          ? nextPage * PAGE_SIZE < total
+          : notes.length === PAGE_SIZE,
+      );
+    } catch (err: unknown) {
+      console.error("Failed to load more notes:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
   useEffect(() => {
     fetch(`${API_BASE_URL}/folders`)
       .then((res) => {
@@ -189,6 +257,68 @@ function App() {
       console.error("Failed to load note detail:", err);
     }
   };
+  const handleRenameFolder = async (
+    folderId: string,
+    name: string,
+  ): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      setFolders((prev) =>
+        prev.map((f) => (f.id === folderId ? { ...f, name } : f)),
+      );
+
+      // notes carry a copy of their folder, keep it in sync
+      setNotesList((prev) =>
+        prev.map((n) =>
+          n.folderId === folderId && n.folder
+            ? { ...n, folder: { ...n.folder, name } }
+            : n,
+        ),
+      );
+    } catch (err: unknown) {
+      console.error("Failed to rename folder:", err);
+      alert("Couldn't rename the folder — check the console for details.");
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string): Promise<void> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+        method: "DELETE",
+        headers: { Accept: "text/plain" },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      setFolders((prev) => prev.filter((f) => f.id !== folderId));
+
+      // adjust this line to match what your backend does with the notes
+      setNotesList((prev) => prev.filter((n) => n.folderId !== folderId));
+
+      if (selectedFolderId === folderId) {
+        setSelectedFolderId(null);
+      }
+      if (selectedNote?.folderId === folderId) {
+        setSelectedNoteId(null);
+      }
+
+      fetchRecentNotes();
+    } catch (err: unknown) {
+      console.error("Failed to delete folder:", err);
+      alert("Couldn't delete the folder — check the console for details.");
+    }
+  };
 
   const handleAddFolder = async (): Promise<void> => {
     const trimmed = newFolderName.trim();
@@ -258,6 +388,7 @@ function App() {
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
+      fetchRecentNotes();
 
       const responseData: Note | { note: Note } = await res.json();
 
@@ -327,7 +458,7 @@ function App() {
       if (!res.ok) {
         throw new Error("Failed to delete note");
       }
-
+      fetchRecentNotes();
       setNotesList((prev) =>
         prev.filter((note) => note.id !== selectedNote.id),
       );
@@ -359,6 +490,7 @@ function App() {
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
+      fetchRecentNotes();
     } catch (err: unknown) {
       console.error("Failed to save note:", err);
     }
@@ -376,6 +508,7 @@ function App() {
       if (!res.ok) {
         throw new Error("Failed to restore note");
       }
+      fetchRecentNotes();
 
       const noteRes = await fetch(`${API_BASE_URL}/notes/${noteId}`);
 
@@ -420,6 +553,7 @@ function App() {
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
+      fetchRecentNotes();
 
       setNotesList((prev) =>
         prev.map((n) =>
@@ -471,8 +605,47 @@ function App() {
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
+      fetchRecentNotes();
     } catch (err: unknown) {
       console.error("Failed to change folder:", err);
+    }
+  };
+  const handleOpenArchived = async (
+    e: React.MouseEvent<HTMLAnchorElement>,
+  ): Promise<void> => {
+    e.preventDefault();
+
+    if (specialView === "archived") {
+      setSpecialView(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/notes?archived=true&limit=100`);
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+
+      const responseData: NotesResponse | Note[] = await res.json();
+
+      const archivedNotes = Array.isArray(responseData)
+        ? responseData
+        : (responseData.notes ?? responseData.data ?? []);
+
+      setNotesList((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        return [
+          ...prev,
+          ...archivedNotes.filter((n) => !existingIds.has(n.id)),
+        ];
+      });
+
+      setSelectedFolderId(null);
+      setSpecialView("archived");
+      setSelectedNoteId(null);
+    } catch (err: unknown) {
+      console.error("Archived error:", err);
     }
   };
 
@@ -497,6 +670,9 @@ function App() {
       if (!res.ok) {
         throw new Error(`Request failed: ${res.status}`);
       }
+      fetchRecentNotes();
+
+      console.log(selectedNote.id);
 
       setNotesList((prev) =>
         prev.map((n) =>
@@ -543,7 +719,11 @@ function App() {
 
   return (
     <>
-      <main className= "main">
+      <main
+        className={`grid h-screen grid-cols-[300px_350px_1fr] overflow-hidden max-[1200px]:grid-cols-[220px_280px_1fr] max-[900px]:grid-cols-[180px_240px_1fr] max-[730px]:flex max-[730px]:h-auto max-[730px]:min-h-screen max-[730px]:w-full max-[730px]:flex-col max-[730px]:overflow-x-hidden max-[730px]:overflow-y-auto ${
+          theme === "dark" ? "dark" : ""
+        }`}
+      >
         <Sidebar
           showSearch={showSearch}
           setShowSearch={setShowSearch}
@@ -551,6 +731,7 @@ function App() {
           setSearchInput={setSearchInput}
           handleNewNote={handleNewNote}
           folders={folders}
+          recentNotes={recentNotes}
           selectedFolderId={selectedFolderId}
           setSelectedFolderId={setSelectedFolderId}
           setSpecialView={setSpecialView}
@@ -560,9 +741,11 @@ function App() {
           setNewFolderName={setNewFolderName}
           handleAddFolder={handleAddFolder}
           handleOpenTrash={handleOpenTrash}
-          notesList={notesList}
+          handleOpenArchived={handleOpenArchived}
           selectedNoteId={selectedNoteId}
           handleSelectNote={handleSelectNote}
+          handleRenameFolder={handleRenameFolder}
+          handleDeleteFolder={handleDeleteFolder}
           specialView={specialView}
         />
 
@@ -572,9 +755,14 @@ function App() {
           selectedNoteId={selectedNoteId}
           handleSelectNote={handleSelectNote}
           specialView={specialView}
+          onLoadMore={loadMoreNotes}
+          hasMore={
+            hasMore && (specialView === null || specialView === "favorites")
+          }
+          loadingMore={loadingMore}
         />
 
-        <section className= {theme==="light"?"last light":"last dark"}>
+        <section className="relative h-screen bg-[whitesmoke] p-[30px] text-[#181818] dark:bg-[#181818] dark:text-white max-[900px]:p-5 max-[730px]:h-auto max-[730px]:w-full max-[730px]:p-4">
           {!selectedNote ? (
             <EmptyState />
           ) : showRestore ? (
