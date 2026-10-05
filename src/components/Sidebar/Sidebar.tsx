@@ -1,4 +1,5 @@
 import "./Sidebar.css";
+import { Link } from "react-router-dom";
 import type { Note, Folder, SpecialView } from "../../types";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useTheme } from "../../context/themeContext";
@@ -14,17 +15,12 @@ type SidebarProps = {
   handleNewNote: () => Promise<void>;
   folders: Folder[];
   selectedFolderId: string | null;
-  setSelectedFolderId: Dispatch<SetStateAction<string | null>>;
-  setSpecialView: Dispatch<SetStateAction<SpecialView>>;
   showAddFolder: boolean;
   setShowAddFolder: Dispatch<SetStateAction<boolean>>;
   newFolderName: string;
   setNewFolderName: Dispatch<SetStateAction<string>>;
   handleAddFolder: () => Promise<void>;
-  handleOpenTrash: (e: React.MouseEvent<HTMLAnchorElement>) => Promise<void>;
-  handleOpenArchived: (e: React.MouseEvent<HTMLAnchorElement>) => Promise<void>;
   selectedNoteId: string | null;
-  handleSelectNote: (note: Note) => Promise<void>;
   specialView: SpecialView;
   recentNotes: Note[];
   handleRenameFolder: (folderId: string, name: string) => Promise<void>;
@@ -47,11 +43,19 @@ const navSelectedBlue = "bg-[#312eb5] font-bold text-white";
 
 const navSelectedGrey =
   "bg-black/10 font-bold text-[#181818] dark:bg-white/10 dark:text-white";
+
 const heading =
   "my-3 flex pl-2.5 text-sm font-bold text-black/60 dark:text-white/60";
 
 const newNoteBox =
   "mx-auto my-[30px] flex h-10 w-[90%] items-center justify-center gap-2 rounded-[3px] border-none bg-black/5 px-5 text-inherit dark:bg-white/5";
+
+const item = (selected: boolean, hover: "blue" | "grey" = "grey") => {
+  if (selected) {
+    return `${navItem} ${hover === "blue" ? navSelectedBlue : navSelectedGrey}`;
+  }
+  return `${navItem} ${hover === "blue" ? navIdleBlue : navIdleGrey}`;
+};
 
 function Sidebar({
   showSearch,
@@ -62,8 +66,6 @@ function Sidebar({
   folders,
   recentNotes,
   selectedFolderId,
-  setSelectedFolderId,
-  setSpecialView,
   handleRenameFolder,
   handleDeleteFolder,
   showAddFolder,
@@ -71,24 +73,14 @@ function Sidebar({
   newFolderName,
   setNewFolderName,
   handleAddFolder,
-  handleOpenTrash,
-  handleOpenArchived,
   selectedNoteId,
-  handleSelectNote,
   specialView,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
-  const item = (selected: boolean, hover: "blue" | "grey" = "grey") => {
-    if (selected) {
-      return `${navItem} ${hover === "blue" ? navSelectedBlue : navSelectedGrey}`;
-    }
-    return `${navItem} ${hover === "blue" ? navIdleBlue : navIdleGrey}`;
-  };
-
   return (
-    <section className="h-screen bg-[whitesmoke] text-[#181818] dark:bg-[#1c1c1c] dark:text-white max-[730px]:h-auto max-[730px]:w-full">
+    <section className="flex h-screen flex-col bg-[whitesmoke] text-[#181818] dark:bg-[#1c1c1c] dark:text-white max-[730px]:h-auto max-[730px]:w-full">
       <span className="flex items-center justify-between px-2.5">
         <img
           className={`pt-5 pl-2.5 ${icon}`}
@@ -107,7 +99,7 @@ function Sidebar({
         </label>
 
         <button
-          className={`transition ${icon}`}
+          className={`cursor-pointer transition ${icon}`}
           onClick={() => setShowSearch(!showSearch)}
         >
           <img
@@ -139,14 +131,10 @@ function Sidebar({
       <section className="p-5">
         <h2 className={heading}>Recents</h2>
         {recentNotes.map((note) => (
-          <a
-            className={item(selectedNoteId === note.id, "blue")}
-            href="#"
+          <Link
             key={note.id}
-            onClick={(e) => {
-              e.preventDefault();
-              handleSelectNote(note);
-            }}
+            className={item(selectedNoteId === note.id, "blue")}
+            to={`/notes/${note.id}`}
           >
             <img
               className={icon}
@@ -158,7 +146,7 @@ function Sidebar({
               alt=""
             />
             {note.title}
-          </a>
+          </Link>
         ))}
       </section>
 
@@ -203,16 +191,13 @@ function Sidebar({
             ) : (
               <div key={folder.id} className="group flex items-center">
                 <div className="min-w-0 flex-1">
-                  <a
+                  <Link
                     className={item(selectedFolderId === folder.id)}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSpecialView(null);
-                      setSelectedFolderId(
-                        selectedFolderId === folder.id ? null : folder.id,
-                      );
-                    }}
+                    to={
+                      selectedFolderId === folder.id
+                        ? "/"
+                        : `/folders/${folder.id}`
+                    }
                   >
                     <img
                       className={icon}
@@ -224,10 +209,10 @@ function Sidebar({
                       alt=""
                     />
                     {folder.name}
-                  </a>
+                  </Link>
                 </div>
 
-                <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                <div className="flex shrink-0 items-center opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                   <button
                     type="button"
                     className="cursor-pointer border-none bg-transparent p-1"
@@ -240,10 +225,10 @@ function Sidebar({
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#ffffff"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
                       <path d="M12 20h9" />
                       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
@@ -264,14 +249,9 @@ function Sidebar({
       <section className="p-5">
         <h2 className={heading}>More</h2>
 
-        <a
+        <Link
           className={item(specialView === "favorites")}
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            setSelectedFolderId(null);
-            setSpecialView(specialView === "favorites" ? null : "favorites");
-          }}
+          to={specialView === "favorites" ? "/" : "/favorites"}
         >
           <img
             className={icon}
@@ -283,13 +263,9 @@ function Sidebar({
             alt=""
           />
           Favorites
-        </a>
+        </Link>
 
-        <a
-          className={item(specialView === "trash")}
-          href="#"
-          onClick={handleOpenTrash}
-        >
+        <Link className={item(specialView === "trash")} to="/trash">
           <img
             className={icon}
             src={
@@ -300,13 +276,9 @@ function Sidebar({
             alt=""
           />
           Trash
-        </a>
+        </Link>
 
-        <a
-          className={item(specialView === "archived")}
-          href="#"
-          onClick={handleOpenArchived}
-        >
+        <Link className={item(specialView === "archived")} to="/archived">
           <img
             className={icon}
             src={
@@ -317,7 +289,7 @@ function Sidebar({
             alt=""
           />
           Archived
-        </a>
+        </Link>
       </section>
     </section>
   );

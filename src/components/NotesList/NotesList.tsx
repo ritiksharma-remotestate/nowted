@@ -7,7 +7,7 @@ type NotesListProps = {
   selectedFolder: Folder | null;
   visibleNotes: Note[];
   selectedNoteId: string | null;
-  handleSelectNote: (note: Note) => Promise<void>;
+  handleSelectNote: (note: Note) => void;
   specialView: string | null;
   onLoadMore: () => Promise<void>;
   hasMore: boolean;

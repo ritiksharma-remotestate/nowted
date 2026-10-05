@@ -108,7 +108,7 @@ function NoteEditor({
       </section>
 
       <textarea
-        className="para min-h-[80vh] w-full resize-y overflow-y-auto border-none bg-transparent text-inherit outline-none"
+        className="para min-h-[80vh] w-full resize-y overflow-y-auto border-none bg-transparent font-['Source_Sans_Pro',sans-serif] text-base leading-7 font-normal tracking-normal text-inherit outline-none"
         value={selectedNote.content ?? ""}
         onChange={(e) => handleFieldChange("content", e.target.value)}
         onBlur={handleSaveNote}
