@@ -23,10 +23,6 @@ type RouteState = {
   noteId: string | null;
 };
 
-// URL shapes:
-//   /                               /notes/:noteId
-//   /folders/:folderId              /folders/:folderId/notes/:noteId
-//   /favorites | /archived | /trash (each also with /notes/:noteId)
 function parseRoute(pathname: string): RouteState {
   const [a, b, c, d] = pathname.split("/").filter(Boolean);
 
@@ -78,16 +74,13 @@ function NotesPage() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [trashNotes, setTrashNotes] = useState<Note[]>([]);
   const [recentNotes, setRecentNotes] = useState<Note[]>([]);
-
   const [notesLoading, setNotesLoading] = useState<boolean>(true);
   const [foldersLoading, setFoldersLoading] = useState<boolean>(true);
   const isLoading = notesLoading || foldersLoading;
   const [loadError, setLoadError] = useState<string | null>(null);
-
   const [showAddFolder, setShowAddFolder] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [showMenu, setShowMenu] = useState<boolean>(false);
-
   const [searchInput, setSearchInput] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
@@ -121,7 +114,6 @@ function NotesPage() {
     return matchesFolder && matchesSpecialView && matchesSearch;
   });
 
-  /* ------------------------------ data loading ------------------------------ */
 
   const fetchRecentNotes = async (): Promise<void> => {
     try {

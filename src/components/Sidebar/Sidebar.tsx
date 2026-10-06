@@ -80,7 +80,7 @@ function Sidebar({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
   return (
-    <section className="flex h-screen flex-col bg-[whitesmoke] text-[#181818] dark:bg-[#1c1c1c] dark:text-white max-[730px]:h-auto max-[730px]:w-full">
+    <section className="flex h-screen flex-col bg-[whitesmoke] text-[#181818] dark:bg-[#181818] dark:text-white max-[730px]:h-auto max-[730px]:w-full">
       <span className="flex items-center justify-between px-2.5">
         <img
           className={`pt-5 pl-2.5 ${icon}`}
@@ -124,7 +124,8 @@ function Sidebar({
         />
       ) : (
         <button className={newNoteBox} onClick={handleNewNote}>
-          + New Note
+          <img className={icon} src="/assets/plus.svg" alt="+" />
+          New Note
         </button>
       )}
 
